@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>IA Multi-Mode – Groq</title>
+
+<style>
+    body {
+        background: #0b0b0b;
+        color: white;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        padding: 30px;
+    }
+
+    h1 {
+        font-size: 32px;
+        margin-bottom: 20px;
+    }
+
+    select, input, textarea, button {
+        padding: 12px;
+        font-size: 18px;
+        border-radius: 10px;
+        border: none;
+        margin: 10px;
+    }
+
+    select, input {
+        width: 80%;
+    }
+
+    textarea {
+        width: 80%;
+        height: 200px;
+    }
+
+    button {
+        cursor: pointer;
+        background: #4CAF50;
+        color: white;
+    }
+
+    #result {
+        margin-top: 30px;
+        padding: 20px;
+        background: #1b1b1b;
+        border-radius: 10px;
+        width: 80%;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: left;
+        white-space: pre-wrap;
+    }
+
+    #previewImg {
+        max-width: 80%;
+        margin-top: 20px;
+        border-radius: 10px;
+        display: none;
+    }
+</style>
+
+</head>
+<body>
+
+<h1>✨ IA Multi-Mode Powered by Groq</h1>
+
+<select id="mode">
+    <option value="normal">Mode Normal</option>
+    <option value="ytpro">Mode YouTube Pro</option>
+    <option value="ultimate">Mode Ultime</option>
+    <option value="image">Mode Image (Stable Diffusion)</option>
+</select>
+
+<br>
+
+<input id="input" placeholder="Écris ton prompt… (ou URL YouTube)">
+<br>
+
+<button id="send">Envoyer</button>
+<button id="publish">Publier sur notre site</button>
+
+<div id="result"></div>
+<img id="previewImg">
+
+<script>
+const apiKey = "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";  // ⚠️ Ta clé ici !
+
+async function callGroq(mode, prompt) {
+    let systemPrompt = "";
+    let model = "mixtral-8x7b-32768";
+
+    if (mode === "normal") {
+        systemPrompt = "Tu es une IA utile.";
+    }
+
+    if (mode === "ultimate") {
+        systemPrompt = "Tu es une IA avancée, très détaillée, extrêmement intelligente.";
+        model = "llama3-70b-8192"; // IA plus puissante
+    }
+
+    if (mode === "ytpro") {
+        systemPrompt =
+            "Tu es YouTube Pro IA. Si on te donne un lien YouTube, tu fais : " +
+            "1) Résumé complet ; 2) Points importants ; 3) Timestamps ; 4) Analyse profonde du contenu ; 5) Conseils pratiques.";
+    }
+
+    if (mode !== "image") {
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + apiKey
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: prompt }
+                ]
+            })
+        });
+
+        const data = await response.json();
+        return data.choices?.[0]?.message?.content || "Erreur IA";
+    }
+}
+
+async function generateImage(prompt) {
+    const response = await fetch("https://api.groq.com/openai/v1/images", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + apiKey
+        },
+        body: JSON.stringify({
+            model: "sd3-large",
+            prompt: prompt,
+            size: "1024x1024"
+        })
+    });
+
+    const data = await response.json();
+    return data.data?.[0]?.url;
+}
+
+document.getElementById("send").onclick = async () => {
+    const mode = document.getElementById("mode").value;
+    const userInput = document.getElementById("input").value;
+
+    document.getElementById("result").innerHTML = "⏳ L’IA réfléchit...";
+    document.getElementById("previewImg").style.display = "none";
+
+    if (mode === "image") {
+        const imgUrl = await generateImage(userInput);
+
+        if (!imgUrl) {
+            document.getElementById("result").innerHTML = "Erreur IA (image).";
+            return;
+        }
+
+        document.getElementById("previewImg").src = imgUrl;
+        document.getElementById("previewImg").style.display = "block";
+        document.getElementById("result").innerHTML = "Image générée :";
+        return;
+    }
+
+    const result = await callGroq(mode, userInput);
+    document.getElementById("result").innerHTML = result;
+};
+
+// ____ PUBLICATION SITE (téléchargement fichier) ____
+
+document.getElementById("publish").onclick = () => {
+    const content = document.getElementById("result").innerText;
+    const blob = new Blob([content], { type: "text/plain" });
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+    link.download = "publication_IA.txt"; // tu peux mettre .html si tu veux
+
+    link.click();
+};
+</script>
+
+</body>
+</html>
