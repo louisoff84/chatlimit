@@ -87,6 +87,7 @@
                         <div class="text-center mt-12 opacity-60" id="welcomeMessage">
                             <p class="text-xl font-semibold">Mode Chat actif</p>
                             <p class="text-sm mt-2">Assistant IA pret</p>
+                            <p class="text-xs mt-4 text-red-500">⚠️ N'oubliez pas de mettre votre cle API Groq dans le code!</p>
                         </div>
                     </div>
                 </div>
@@ -138,7 +139,7 @@
         var modes = {
             chat: { label: 'Chat', color: 'purple', model: 'llama-3.3-70b-versatile', temp: 0.7, maxTokens: 2048, systemPrompt: 'Tu es un assistant IA serviable.' },
             code: { label: 'Code', color: 'blue', model: 'llama-3.3-70b-versatile', temp: 0.3, maxTokens: 4096, systemPrompt: 'Tu es un expert en programmation. Code HTML complet.' },
-            image: { label: 'Image', color: 'pink', model: 'llama-3.2-90b-vision-preview', temp: 0.8, maxTokens: 1024, systemPrompt: 'Tu es un expert en analyse d images.' },
+            image: { label: 'Image', color: 'pink', model: 'llama-3.3-70b-versatile', temp: 0.8, maxTokens: 1024, systemPrompt: 'Tu es un expert en analyse d images.' },
             youtube: { label: 'YouTube', color: 'red', model: 'llama-3.3-70b-versatile', temp: 0.8, maxTokens: 3072, systemPrompt: 'Tu es un expert YouTube. Scripts SEO.' },
             extreme: { label: 'Extreme', color: 'yellow', model: 'llama-3.1-8b-instant', temp: 0.9, maxTokens: 8192, systemPrompt: 'Mode EXTREME. Reponse rapide et creative.' }
         };
@@ -202,6 +203,11 @@
             
             if (!messageText || isLoading) return;
             
+            if (GROQ_API_KEY === 'VOTRE_CLE_GROQ_ICI' || !GROQ_API_KEY) {
+                alert('Erreur: Vous devez configurer votre cle API Groq dans le code!\n\nRemplacez VOTRE_CLE_GROQ_ICI par votre vraie cle API.\n\nObtenez-en une gratuitement sur: https://console.groq.com');
+                return;
+            }
+            
             var modeConfig = modes[currentMode];
             document.getElementById('welcomeMessage').style.display = 'none';
             
@@ -224,7 +230,11 @@
             })
             .then(function(response) {
                 removeLoadingIndicator();
-                if (!response.ok) throw new Error('Erreur API: ' + response.status);
+                if (!response.ok) {
+                    return response.json().then(function(err) {
+                        throw new Error('API Error ' + response.status + ': ' + (err.error && err.error.message ? err.error.message : 'Verifiez votre cle API'));
+                    });
+                }
                 return response.json();
             })
             .then(function(data) {
@@ -304,6 +314,12 @@
         document.getElementById('messageInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') sendMessage();
         });
+
+        window.onload = function() {
+            if (GROQ_API_KEY === 'VOTRE_CLE_GROQ_ICI' || !GROQ_API_KEY) {
+                document.getElementById('welcomeMessage').innerHTML = '<div class="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg"><p class="font-bold text-lg">⚠️ Configuration requise</p><p class="mt-2">Vous devez configurer votre cle API Groq!</p><p class="mt-2 text-sm">1. Allez sur <a href="https://console.groq.com" target="_blank" class="underline">console.groq.com</a></p><p class="text-sm">2. Creez un compte gratuit</p><p class="text-sm">3. Generez une cle API</p><p class="text-sm">4. Remplacez VOTRE_CLE_GROQ_ICI dans le code (ligne 113)</p></div>';
+            }
+        };
     </script>
 </body>
 </html>
