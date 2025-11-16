@@ -2,185 +2,216 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>IA Multi-Mode – Groq</title>
+<title>IA Groq – Chat Interface</title>
 
 <style>
     body {
-        background: #0b0b0b;
+        margin: 0;
+        background: #101010;
         color: white;
         font-family: Arial, sans-serif;
-        text-align: center;
-        padding: 30px;
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
     }
 
-    h1 {
-        font-size: 32px;
-        margin-bottom: 20px;
-    }
-
-    select, input, textarea, button {
-        padding: 12px;
-        font-size: 18px;
-        border-radius: 10px;
-        border: none;
-        margin: 10px;
-    }
-
-    select, input {
-        width: 80%;
-    }
-
-    textarea {
-        width: 80%;
-        height: 200px;
-    }
-
-    button {
-        cursor: pointer;
-        background: #4CAF50;
-        color: white;
-    }
-
-    #result {
-        margin-top: 30px;
-        padding: 20px;
+    /* Sidebar */
+    .sidebar {
+        width: 260px;
         background: #1b1b1b;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        border-right: 2px solid #222;
+    }
+
+    .sidebar h2 {
+        font-size: 20px;
+        margin-bottom: 15px;
+        color: #4CAF50;
+    }
+
+    .sidebar select {
+        padding: 10px;
+        font-size: 16px;
+        background: #262626;
+        color: white;
+        border-radius: 8px;
+        border: none;
+    }
+
+    .sidebar button {
+        margin-top: 20px;
+        padding: 12px;
+        background: #4caf50;
+        border: none;
+        color: white;
         border-radius: 10px;
-        width: 80%;
-        margin-left: auto;
-        margin-right: auto;
-        text-align: left;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    /* Chat container */
+    .chat {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    /* Messages area */
+    .messages {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .msg {
+        max-width: 70%;
+        margin-bottom: 15px;
+        padding: 12px 15px;
+        border-radius: 12px;
+        line-height: 1.5;
         white-space: pre-wrap;
     }
 
-    #previewImg {
-        max-width: 80%;
-        margin-top: 20px;
-        border-radius: 10px;
-        display: none;
+    .user {
+        background: #4caf50;
+        color: white;
+        margin-left: auto;
     }
-</style>
 
+    .bot {
+        background: #222;
+        color: white;
+        margin-right: auto;
+        border: 1px solid #333;
+    }
+
+    /* Input area */
+    .input-zone {
+        padding: 15px;
+        display: flex;
+        gap: 10px;
+        border-top: 2px solid #222;
+        background: #161616;
+    }
+
+    .input-zone input {
+        flex-grow: 1;
+        padding: 12px;
+        border-radius: 10px;
+        border: none;
+        background: #262626;
+        color: white;
+        font-size: 18px;
+    }
+
+    .input-zone button {
+        padding: 12px 20px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+
+</style>
 </head>
+
 <body>
 
-<h1>✨ IA Multi-Mode Powered by Groq</h1>
+<div class="sidebar">
+    <h2>Modes IA</h2>
 
-<select id="mode">
-    <option value="normal">Mode Normal</option>
-    <option value="ytpro">Mode YouTube Pro</option>
-    <option value="ultimate">Mode Ultime</option>
-    <option value="image">Mode Image (Stable Diffusion)</option>
-</select>
+    <select id="mode">
+        <option value="normal">Mode Normal</option>
+        <option value="ytpro">YouTube Pro</option>
+        <option value="ultimate">Mode Ultime</option>
+        <option value="image">Mode Image (texte)</option>
+    </select>
 
-<br>
+    <button id="publish">Publier sur le site</button>
+</div>
 
-<input id="input" placeholder="Écris ton prompt… (ou URL YouTube)">
-<br>
+<div class="chat">
+    <div class="messages" id="messages"></div>
 
-<button id="send">Envoyer</button>
-<button id="publish">Publier sur notre site</button>
-
-<div id="result"></div>
-<img id="previewImg">
+    <div class="input-zone">
+        <input id="prompt" placeholder="Message…">
+        <button id="run">Envoyer</button>
+    </div>
+</div>
 
 <script>
-const apiKey = "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";  // ⚠️ Ta clé ici !
+const apiKey = "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"; // ⚠️ Ta clé ici
 
-async function callGroq(mode, prompt) {
-    let systemPrompt = "";
-    let model = "mixtral-8x7b-32768";
-
-    if (mode === "normal") {
-        systemPrompt = "Tu es une IA utile.";
-    }
-
-    if (mode === "ultimate") {
-        systemPrompt = "Tu es une IA avancée, très détaillée, extrêmement intelligente.";
-        model = "llama3-70b-8192"; // IA plus puissante
-    }
-
-    if (mode === "ytpro") {
-        systemPrompt =
-            "Tu es YouTube Pro IA. Si on te donne un lien YouTube, tu fais : " +
-            "1) Résumé complet ; 2) Points importants ; 3) Timestamps ; 4) Analyse profonde du contenu ; 5) Conseils pratiques.";
-    }
-
-    if (mode !== "image") {
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + apiKey
-            },
-            body: JSON.stringify({
-                model: model,
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: prompt }
-                ]
-            })
-        });
-
-        const data = await response.json();
-        return data.choices?.[0]?.message?.content || "Erreur IA";
-    }
+function addMessage(text, type) {
+    const msg = document.createElement("div");
+    msg.className = "msg " + type;
+    msg.textContent = text;
+    document.getElementById("messages").appendChild(msg);
+    msg.scrollIntoView();
 }
 
-async function generateImage(prompt) {
-    const response = await fetch("https://api.groq.com/openai/v1/images", {
+async function askGroq(system, userMsg) {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "Authorization": "Bearer " + apiKey
         },
         body: JSON.stringify({
-            model: "sd3-large",
-            prompt: prompt,
-            size: "1024x1024"
+            model: "mixtral-8x7b-32768",
+            messages: [
+                { role: "system", content: system },
+                { role: "user", content: userMsg }
+            ]
         })
     });
 
-    const data = await response.json();
-    return data.data?.[0]?.url;
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || "Erreur API";
 }
 
-document.getElementById("send").onclick = async () => {
+document.getElementById("run").onclick = async () => {
     const mode = document.getElementById("mode").value;
-    const userInput = document.getElementById("input").value;
+    const prompt = document.getElementById("prompt").value;
 
-    document.getElementById("result").innerHTML = "⏳ L’IA réfléchit...";
-    document.getElementById("previewImg").style.display = "none";
+    if (!prompt.trim()) return;
 
-    if (mode === "image") {
-        const imgUrl = await generateImage(userInput);
+    addMessage(prompt, "user");
+    document.getElementById("prompt").value = "";
 
-        if (!imgUrl) {
-            document.getElementById("result").innerHTML = "Erreur IA (image).";
-            return;
-        }
+    let systemPrompt = "";
 
-        document.getElementById("previewImg").src = imgUrl;
-        document.getElementById("previewImg").style.display = "block";
-        document.getElementById("result").innerHTML = "Image générée :";
-        return;
-    }
+    if (mode === "normal") systemPrompt = "Tu es une IA simple, utile et claire.";
+    if (mode === "ultimate") systemPrompt = "Tu es une IA très avancée, précise et détaillée.";
+    if (mode === "ytpro") systemPrompt =
+        "Tu es YouTube Pro IA. Si on t'envoie une URL YouTube, tu fais : résumé, analyse, timestamps, points clés.";
+    if (mode === "image") systemPrompt =
+        "Décris une image très précisément, comme si tu la générais.";
 
-    const result = await callGroq(mode, userInput);
-    document.getElementById("result").innerHTML = result;
+    addMessage("⏳ Réflexion…", "bot");
+
+    const reply = await askGroq(systemPrompt, prompt);
+
+    // Remplace le message "réflexion…" par la vraie réponse
+    const messages = document.getElementById("messages");
+    messages.lastChild.remove();
+    addMessage(reply, "bot");
 };
 
-// ____ PUBLICATION SITE (téléchargement fichier) ____
-
 document.getElementById("publish").onclick = () => {
-    const content = document.getElementById("result").innerText;
-    const blob = new Blob([content], { type: "text/plain" });
-    const link = document.createElement("a");
+    const allText = [...document.getElementById("messages").children]
+        .map(m => (m.classList.contains("user") ? "👤 User:\n" : "🤖 IA:\n") + m.innerText)
+        .join("\n\n");
 
-    link.href = URL.createObjectURL(blob);
-    link.download = "publication_IA.txt"; // tu peux mettre .html si tu veux
-
-    link.click();
+    const blob = new Blob([allText], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "publication.txt";
+    a.click();
 };
 </script>
 
