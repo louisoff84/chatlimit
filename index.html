@@ -3,323 +3,387 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Groq Multi-Mode AI</title>
+    <title>Connect — Chat Simple</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; }
-        .bounce1 { animation: bounce 1s infinite; }
-        .bounce2 { animation: bounce 1s infinite 0.1s; }
-        .bounce3 { animation: bounce 1s infinite 0.2s; }
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        .theme-dark { background: #111827; color: #f3f4f6; }
-        .theme-night { background: #000; color: #dbeafe; }
-        .card-dark { background: #1f2937; border-color: #374151; }
-        .card-night { background: #0f172a; border-color: #1e3a8a; }
-        .bg-purple { background: #9333ea; color: white; }
-        .bg-blue { background: #2563eb; color: white; }
-        .bg-pink { background: #ec4899; color: white; }
-        .bg-red { background: #dc2626; color: white; }
-        .bg-yellow { background: #eab308; color: white; }
-        .dot-purple { background: #a855f7; }
-        .dot-blue { background: #3b82f6; }
-        .dot-pink { background: #f472b6; }
-        .dot-red { background: #ef4444; }
-        .dot-yellow { background: #facc15; }
+        /* Styles de base pour assurer l'affichage */
+        body { background-color: #1a1d21; color: #d1d5db; }
+        
+        /* Scrollbar moderne */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+        
+        /* Animations */
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
-    
-    <div class="flex flex-col h-screen">
-        <div class="bg-white shadow-lg border-b border-gray-200 p-4" id="header">
-            <div class="max-w-7xl mx-auto">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-purple rounded-lg">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <h1 class="text-2xl font-bold">Groq Multi-Mode AI</h1>
-                            <p class="text-sm opacity-70" id="modeInfo">Mode: Chat</p>
+<body class="h-screen flex flex-col overflow-hidden font-sans antialiased selection:bg-blue-500 selection:text-white">
+
+    <!-- Bannière d'erreur (cachée par défaut) -->
+    <div id="error-banner" class="bg-red-600 text-white text-xs p-2 text-center hidden z-50"></div>
+
+    <!-- Container Principal -->
+    <div class="flex-1 flex min-h-0">
+        
+        <!-- SIDEBAR (Liste des Salons) -->
+        <div class="w-64 bg-[#1e2126] border-r border-[#2b2d31] flex flex-col flex-shrink-0">
+            <!-- Header Sidebar -->
+            <div class="h-14 border-b border-[#2b2d31] flex items-center justify-between px-4">
+                <h1 class="font-bold text-white tracking-tight text-lg">Connect<span class="text-blue-500">.</span></h1>
+                <button onclick="app.toggleCreateModal()" class="bg-[#2b2d31] hover:bg-[#35373c] text-white w-8 h-8 rounded flex items-center justify-center transition">
+                    <i class="fa-solid fa-plus text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Liste des Salons -->
+            <div class="flex-1 overflow-y-auto p-3 space-y-1" id="channels-list">
+                <div class="text-center text-xs text-gray-500 mt-4">Chargement des salons...</div>
+            </div>
+
+            <!-- Profil Utilisateur (Bas) -->
+            <div class="p-3 bg-[#17191c] border-t border-[#2b2d31]">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold mr-3" id="user-avatar">?</div>
+                    <div class="overflow-hidden">
+                        <div class="text-sm font-medium text-white truncate" id="user-name">Connexion...</div>
+                        <div class="text-xs text-green-500 flex items-center">
+                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span> En ligne
                         </div>
                     </div>
-                    
-                    <button onclick="toggleTheme()" class="p-2 bg-white border border-gray-200 rounded-lg hover:opacity-80">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="flex gap-2 overflow-x-auto pb-2">
-                    <button onclick="setMode('chat')" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple" id="btn-chat">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                        <span>Chat</span>
-                    </button>
-                    <button onclick="setMode('code')" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200" id="btn-code">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-                        <span>Code</span>
-                    </button>
-                    <button onclick="setMode('image')" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200" id="btn-image">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        <span>Image</span>
-                    </button>
-                    <button onclick="setMode('youtube')" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200" id="btn-youtube">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                        <span>YouTube</span>
-                    </button>
-                    <button onclick="setMode('extreme')" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200" id="btn-extreme">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                        <span>Extreme</span>
-                    </button>
                 </div>
             </div>
         </div>
 
-        <div class="flex flex-1 overflow-hidden">
-            <div class="flex flex-col flex-1" id="chatArea">
-                <div class="flex-1 overflow-y-auto p-4" id="messagesContainer">
-                    <div class="max-w-4xl mx-auto" id="messages">
-                        <div class="text-center mt-12 opacity-60" id="welcomeMessage">
-                            <p class="text-xl font-semibold">Mode Chat actif</p>
-                            <p class="text-sm mt-2">Assistant IA pret</p>
-                            <p class="text-xs mt-4 text-red-500">⚠️ N'oubliez pas de mettre votre cle API Groq dans le code!</p>
-                        </div>
-                    </div>
+        <!-- ZONE PRINCIPALE (Chat & Vidéo) -->
+        <div class="flex-1 flex flex-col bg-[#222529] relative">
+            
+            <!-- Header Chat -->
+            <div class="h-14 border-b border-[#2b2d31] flex items-center justify-between px-6 flex-shrink-0 bg-[#222529]">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-hashtag text-gray-500 mr-2"></i>
+                    <h2 id="current-channel-name" class="font-bold text-white">général</h2>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="app.toggleVideoMode()" id="btn-video-mode" class="px-3 py-1.5 rounded text-sm font-medium bg-[#2b2d31] hover:bg-[#35373c] text-gray-300 transition flex items-center">
+                        <i class="fa-solid fa-video mr-2"></i> Salon Vocal / Partage
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contenu: Mode Chat (Par défaut) -->
+            <div id="view-chat" class="flex-1 flex flex-col min-h-0">
+                <!-- Messages -->
+                <div id="messages-container" class="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col-reverse scroll-smooth">
+                    <!-- Les messages s'affichent ici -->
+                    <div class="text-center text-gray-500 text-sm my-auto">Aucun message pour le moment.</div>
                 </div>
 
-                <div class="bg-white border-t border-gray-200 p-4" id="inputArea">
-                    <div class="max-w-4xl mx-auto flex gap-2">
-                        <input type="text" id="messageInput" placeholder="Votre message..." class="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"/>
-                        <button onclick="sendMessage()" class="bg-purple px-6 py-3 rounded-lg hover:opacity-90 flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                <!-- Zone de saisie -->
+                <div class="p-4 pt-2">
+                    <div class="bg-[#2b2d31] rounded-lg p-2 flex items-end ring-1 ring-transparent focus-within:ring-blue-500 transition duration-200">
+                        <textarea id="message-input" rows="1" class="bg-transparent text-white w-full px-2 py-2 outline-none resize-none placeholder-gray-500 max-h-32" placeholder="Envoyer un message..."></textarea>
+                        <button onclick="app.sendMessage()" class="p-2 text-blue-500 hover:bg-[#35373c] rounded-md transition self-end">
+                            <i class="fa-solid fa-paper-plane"></i>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div id="codePanel" class="hidden border-l border-gray-200 flex-col" style="width: 50%;">
-                <div class="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-                    <h2 class="font-semibold">Apercu et Code</h2>
-                    <div class="flex gap-2">
-                        <button onclick="copyCode()" class="p-2 bg-white border border-gray-200 rounded-lg hover:opacity-80">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                        </button>
-                        <button onclick="runCode()" class="p-2 bg-blue rounded-lg hover:opacity-90">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="flex-1 flex flex-col overflow-hidden">
-                    <div class="flex-1 bg-white overflow-hidden">
-                        <iframe id="preview" class="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
-                    </div>
+            <!-- Contenu: Mode Vidéo (Caché par défaut) -->
+            <div id="view-video" class="hidden flex-1 flex flex-col items-center justify-center bg-[#111214] p-4">
+                <div class="w-full max-w-4xl flex-1 flex flex-col items-center justify-center relative">
                     
-                    <div class="h-64 bg-white border-t border-gray-200 overflow-auto">
-                        <pre class="p-4 text-sm"><code id="codeDisplay">// Code ici...</code></pre>
+                    <!-- Placeholder quand pas de vidéo -->
+                    <div id="video-placeholder" class="text-center">
+                        <div class="w-24 h-24 bg-[#2b2d31] rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fa-solid fa-video-slash text-3xl text-gray-500"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-2">Salle de réunion</h3>
+                        <p class="text-gray-400 mb-8">Partagez votre écran ou activez votre caméra pour commencer.</p>
+                    </div>
+
+                    <!-- Élément Vidéo -->
+                    <video id="local-video" autoplay playsinline muted class="hidden w-full max-h-[70vh] bg-black rounded-lg shadow-2xl border border-[#2b2d31]"></video>
+
+                    <!-- Contrôles -->
+                    <div class="mt-8 flex space-x-4">
+                        <button onclick="app.startScreenShare()" class="bg-[#2b2d31] hover:bg-[#35373c] text-white px-6 py-3 rounded-full font-medium transition flex items-center">
+                            <i class="fa-solid fa-desktop mr-2"></i> Partager l'écran
+                        </button>
+                        <button onclick="app.stopMedia()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full font-medium transition">
+                            Couper
+                        </button>
                     </div>
                 </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal Création Salon -->
+    <div id="modal-create" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-[#222529] p-6 rounded-lg w-full max-w-sm border border-[#2b2d31] shadow-xl">
+            <h3 class="text-lg font-bold text-white mb-4">Nouveau Salon</h3>
+            <input type="text" id="new-channel-name" placeholder="Nom du salon (ex: projets)" class="w-full bg-[#1a1d21] text-white border border-[#2b2d31] rounded p-2.5 outline-none focus:border-blue-500 mb-4">
+            <div class="flex justify-end space-x-3">
+                <button onclick="app.toggleCreateModal()" class="text-gray-400 hover:text-white px-3 py-2 text-sm">Annuler</button>
+                <button onclick="app.createChannel()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium">Créer</button>
             </div>
         </div>
     </div>
 
-    <script>
-        var GROQ_API_KEY = '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';
-        var messages = [];
-        var currentMode = 'chat';
-        var currentTheme = 'light';
-        var isLoading = false;
-        var codePreview = '';
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        var modes = {
-            chat: { label: 'Chat', color: 'purple', model: 'llama-3.3-70b-versatile', temp: 0.7, maxTokens: 2048, systemPrompt: 'Tu es un assistant IA serviable.' },
-            code: { label: 'Code', color: 'blue', model: 'llama-3.3-70b-versatile', temp: 0.3, maxTokens: 4096, systemPrompt: 'Tu es un expert en programmation. Code HTML complet.' },
-            image: { label: 'Image', color: 'pink', model: 'llama-3.3-70b-versatile', temp: 0.8, maxTokens: 1024, systemPrompt: 'Tu es un expert en analyse d images.' },
-            youtube: { label: 'YouTube', color: 'red', model: 'llama-3.3-70b-versatile', temp: 0.8, maxTokens: 3072, systemPrompt: 'Tu es un expert YouTube. Scripts SEO.' },
-            extreme: { label: 'Extreme', color: 'yellow', model: 'llama-3.1-8b-instant', temp: 0.9, maxTokens: 8192, systemPrompt: 'Mode EXTREME. Reponse rapide et creative.' }
-        };
+        const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'simple-chat-v1';
 
-        function setMode(mode) {
-            currentMode = mode;
-            var modeConfig = modes[mode];
-            document.getElementById('modeInfo').textContent = 'Mode: ' + modeConfig.label;
-            document.getElementById('messageInput').placeholder = 'Message en mode ' + modeConfig.label + '...';
-            
-            var buttons = ['chat', 'code', 'image', 'youtube', 'extreme'];
-            for (var i = 0; i < buttons.length; i++) {
-                var btn = buttons[i];
-                var btnEl = document.getElementById('btn-' + btn);
-                if (btn === mode) {
-                    btnEl.className = 'flex items-center gap-2 px-4 py-2 rounded-lg bg-' + modeConfig.color;
-                } else {
-                    btnEl.className = 'flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200';
-                }
-            }
-            
-            if (mode === 'code') {
-                document.getElementById('chatArea').style.width = '50%';
-                document.getElementById('codePanel').style.display = 'flex';
-                document.getElementById('codePanel').classList.remove('hidden');
-            } else {
-                document.getElementById('chatArea').style.width = '100%';
-                document.getElementById('codePanel').style.display = 'none';
-                document.getElementById('codePanel').classList.add('hidden');
-            }
-            
-            document.getElementById('welcomeMessage').innerHTML = '<p class="text-xl font-semibold">Mode ' + modeConfig.label + '</p><p class="text-sm mt-2">' + modeConfig.systemPrompt + '</p>';
-        }
-
-        function toggleTheme() {
-            var body = document.body;
-            var header = document.getElementById('header');
-            var inputArea = document.getElementById('inputArea');
-            
-            if (currentTheme === 'light') {
-                currentTheme = 'dark';
-                body.className = 'theme-dark';
-                header.className = 'card-dark shadow-lg border-b p-4';
-                inputArea.className = 'card-dark border-t p-4';
-            } else if (currentTheme === 'dark') {
-                currentTheme = 'night';
-                body.className = 'theme-night';
-                header.className = 'card-night shadow-lg border-b p-4';
-                inputArea.className = 'card-night border-t p-4';
-            } else {
-                currentTheme = 'light';
-                body.className = 'bg-gray-50 text-gray-900';
-                header.className = 'bg-white shadow-lg border-b border-gray-200 p-4';
-                inputArea.className = 'bg-white border-t border-gray-200 p-4';
-            }
-        }
-
-        function sendMessage() {
-            var input = document.getElementById('messageInput');
-            var messageText = input.value.trim();
-            
-            if (!messageText || isLoading) return;
-            
-            if (GROQ_API_KEY === 'VOTRE_CLE_GROQ_ICI' || !GROQ_API_KEY) {
-                alert('Erreur: Vous devez configurer votre cle API Groq dans le code!\n\nRemplacez VOTRE_CLE_GROQ_ICI par votre vraie cle API.\n\nObtenez-en une gratuitement sur: https://console.groq.com');
-                return;
-            }
-            
-            var modeConfig = modes[currentMode];
-            document.getElementById('welcomeMessage').style.display = 'none';
-            
-            messages.push({ role: 'user', content: messageText });
-            addMessageToUI('user', messageText, modeConfig.color);
-            
-            input.value = '';
-            isLoading = true;
-            addLoadingIndicator(modeConfig.color);
-            
-            fetch('https://api.groq.com/openai/v1/chat/completions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_API_KEY },
-                body: JSON.stringify({
-                    model: modeConfig.model,
-                    messages: [{ role: 'system', content: modeConfig.systemPrompt }].concat(messages),
-                    temperature: modeConfig.temp,
-                    max_tokens: modeConfig.maxTokens
-                })
-            })
-            .then(function(response) {
-                removeLoadingIndicator();
-                if (!response.ok) {
-                    return response.json().then(function(err) {
-                        throw new Error('API Error ' + response.status + ': ' + (err.error && err.error.message ? err.error.message : 'Verifiez votre cle API'));
-                    });
-                }
-                return response.json();
-            })
-            .then(function(data) {
-                var content = data.choices[0].message.content;
-                messages.push({ role: 'assistant', content: content });
-                addMessageToUI('assistant', content, modeConfig.color);
+        class App {
+            constructor() {
+                this.db = null;
+                this.auth = null;
+                this.user = null;
+                this.currentChannelId = 'general'; // Default ID
+                this.stream = null;
                 
-                if (currentMode === 'code') {
-                    var match = content.match(/```(?:html|javascript|js|css)?\n?([\s\S]*?)```/);
-                    codePreview = match ? match[1] : content;
-                    document.getElementById('codeDisplay').textContent = codePreview;
-                    runCode();
-                }
-                isLoading = false;
-            })
-            .catch(function(error) {
-                removeLoadingIndicator();
-                console.error('Erreur:', error);
-                addMessageToUI('assistant', 'Erreur: ' + error.message, 'red');
-                isLoading = false;
-            });
-        }
+                // DOM Elements
+                this.dom = {
+                    messages: document.getElementById('messages-container'),
+                    channels: document.getElementById('channels-list'),
+                    input: document.getElementById('message-input'),
+                    videoView: document.getElementById('view-video'),
+                    chatView: document.getElementById('view-chat'),
+                    localVideo: document.getElementById('local-video'),
+                    videoPlaceholder: document.getElementById('video-placeholder'),
+                    errorBanner: document.getElementById('error-banner')
+                };
 
-        function addMessageToUI(role, content, color) {
-            var messagesDiv = document.getElementById('messages');
-            var messageDiv = document.createElement('div');
-            messageDiv.className = 'flex ' + (role === 'user' ? 'justify-end' : 'justify-start') + ' mb-4';
-            
-            var bubble = document.createElement('div');
-            var bgClass = role === 'user' ? 'bg-' + color : (currentTheme === 'dark' ? 'card-dark' : currentTheme === 'night' ? 'card-night' : 'bg-white border border-gray-200');
-            bubble.className = 'max-w-3xl px-4 py-3 rounded-2xl shadow-sm ' + bgClass;
-            
-            var pre = document.createElement('pre');
-            pre.className = 'whitespace-pre-wrap font-sans';
-            pre.textContent = content;
-            
-            bubble.appendChild(pre);
-            messageDiv.appendChild(bubble);
-            messagesDiv.appendChild(messageDiv);
-            document.getElementById('messagesContainer').scrollTop = 999999;
-        }
+                // Event Listeners
+                this.dom.input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
 
-        function addLoadingIndicator(color) {
-            var messagesDiv = document.getElementById('messages');
-            var loadingDiv = document.createElement('div');
-            loadingDiv.id = 'loadingIndicator';
-            loadingDiv.className = 'flex justify-start mb-4';
-            
-            var bubble = document.createElement('div');
-            var bgClass = currentTheme === 'dark' ? 'card-dark' : currentTheme === 'night' ? 'card-night' : 'bg-white border border-gray-200';
-            bubble.className = bgClass + ' px-4 py-3 rounded-2xl shadow-sm flex items-center gap-2';
-            bubble.innerHTML = '<div class="w-2 h-2 dot-' + color + ' rounded-full bounce1"></div><div class="w-2 h-2 dot-' + color + ' rounded-full bounce2"></div><div class="w-2 h-2 dot-' + color + ' rounded-full bounce3"></div>';
-            
-            loadingDiv.appendChild(bubble);
-            messagesDiv.appendChild(loadingDiv);
-        }
-
-        function removeLoadingIndicator() {
-            var loading = document.getElementById('loadingIndicator');
-            if (loading) loading.remove();
-        }
-
-        function copyCode() {
-            navigator.clipboard.writeText(codePreview);
-            alert('Code copie!');
-        }
-
-        function runCode() {
-            if (!codePreview) return;
-            var iframe = document.getElementById('preview');
-            var doc = iframe.contentDocument || iframe.contentWindow.document;
-            doc.open();
-            doc.write(codePreview);
-            doc.close();
-        }
-
-        document.getElementById('messageInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') sendMessage();
-        });
-
-        window.onload = function() {
-            if (GROQ_API_KEY === 'VOTRE_CLE_GROQ_ICI' || !GROQ_API_KEY) {
-                document.getElementById('welcomeMessage').innerHTML = '<div class="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg"><p class="font-bold text-lg">⚠️ Configuration requise</p><p class="mt-2">Vous devez configurer votre cle API Groq!</p><p class="mt-2 text-sm">1. Allez sur <a href="https://console.groq.com" target="_blank" class="underline">console.groq.com</a></p><p class="text-sm">2. Creez un compte gratuit</p><p class="text-sm">3. Generez une cle API</p><p class="text-sm">4. Remplacez VOTRE_CLE_GROQ_ICI dans le code (ligne 113)</p></div>';
+                this.init();
             }
-        };
-    </script>
-</body>
-</html>
+
+            showError(msg) {
+                this.dom.errorBanner.textContent = "Erreur: " + msg;
+                this.dom.errorBanner.classList.remove('hidden');
+                console.error(msg);
+            }
+
+            async init() {
+                if (!config) return this.showError("Configuration Firebase manquante.");
+
+                try {
+                    const firebaseApp = initializeApp(config);
+                    this.auth = getAuth(firebaseApp);
+                    this.db = getFirestore(firebaseApp);
+
+                    // Auth Logic
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(this.auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(this.auth);
+                    }
+
+                    onAuthStateChanged(this.auth, (user) => {
+                        if (user) {
+                            this.user = user;
+                            this.updateUserProfile();
+                            this.loadChannels();
+                            this.loadMessages();
+                        } else {
+                            document.getElementById('user-name').textContent = "Déconnecté";
+                        }
+                    });
+
+                } catch (e) {
+                    this.showError(e.message);
+                }
+            }
+
+            updateUserProfile() {
+                const shortId = this.user.uid.substring(0, 5).toUpperCase();
+                document.getElementById('user-name').textContent = `Utilisateur ${shortId}`;
+                document.getElementById('user-avatar').textContent = shortId.substring(0, 2);
+            }
+
+            // --- DATA ---
+
+            loadChannels() {
+                // On triche un peu pour la démo : si pas de collection "channels", on en crée une statique
+                // en mémoire pour que l'UI ne soit jamais vide.
+                const channelsRef = collection(this.db, 'artifacts', appId, 'public', 'data', 'channels');
+                
+                onSnapshot(channelsRef, (snapshot) => {
+                    const channels = [];
+                    snapshot.forEach(doc => channels.push({ id: doc.id, ...doc.data() }));
+                    
+                    // Ajout du canal général par défaut s'il n'existe pas dans la liste
+                    if (!channels.find(c => c.name === 'général')) {
+                        channels.unshift({ id: 'general', name: 'général' });
+                    }
+
+                    this.renderChannels(channels);
+                }, (err) => {
+                    // Fallback en cas d'erreur de droits (arrive parfois)
+                    console.warn("Fallback local channels", err);
+                    this.renderChannels([{ id: 'general', name: 'général (local)' }]);
+                });
+            }
+
+            renderChannels(channels) {
+                this.dom.channels.innerHTML = '';
+                channels.forEach(ch => {
+                    const div = document.createElement('div');
+                    const isActive = this.currentChannelId === ch.id;
+                    div.className = `px-3 py-2 rounded cursor-pointer flex items-center text-sm font-medium transition ${isActive ? 'bg-[#35373c] text-white' : 'text-gray-400 hover:bg-[#2b2d31] hover:text-gray-200'}`;
+                    div.onclick = () => this.switchChannel(ch.id, ch.name);
+                    div.innerHTML = `<span class="text-gray-500 mr-2">#</span> ${ch.name}`;
+                    this.dom.channels.appendChild(div);
+                });
+            }
+
+            switchChannel(id, name) {
+                this.currentChannelId = id;
+                document.getElementById('current-channel-name').textContent = name;
+                this.loadMessages();
+                
+                // Met à jour la sidebar visuellement
+                this.loadChannels(); // Reload pour mettre à jour la classe active (un peu brut mais efficace ici)
+            }
+
+            createChannel() {
+                const nameInput = document.getElementById('new-channel-name');
+                const name = nameInput.value.trim().toLowerCase().replace(/\s/g, '-');
+                
+                if (name) {
+                    addDoc(collection(this.db, 'artifacts', appId, 'public', 'data', 'channels'), {
+                        name: name,
+                        createdAt: serverTimestamp()
+                    }).catch(err => this.showError(err.message));
+                    
+                    nameInput.value = '';
+                    this.toggleCreateModal();
+                }
+            }
+
+            // --- MESSAGING ---
+
+            loadMessages() {
+                if (this.unsubMsg) this.unsubMsg();
+
+                const q = query(
+                    collection(this.db, 'artifacts', appId, 'public', 'data', 'messages'),
+                    orderBy('createdAt', 'desc'),
+                    limit(50)
+                );
+
+                this.unsubMsg = onSnapshot(q, (snapshot) => {
+                    this.dom.messages.innerHTML = '';
+                    const msgs = [];
+                    snapshot.forEach(doc => {
+                        const d = doc.data();
+                        // Filtrage manuel (plus sûr sans index complexes)
+                        if (d.channelId === this.currentChannelId) {
+                            msgs.push({ id: doc.id, ...d });
+                        }
+                    });
+
+                    if (msgs.length === 0) {
+                        this.dom.messages.innerHTML = `<div class="text-center text-gray-600 mt-10 text-sm">Début du salon #${document.getElementById('current-channel-name').textContent}</div>`;
+                    } else {
+                        msgs.forEach(m => this.renderMessage(m));
+                    }
+                });
+            }
+
+            renderMessage(msg) {
+                const div = document.createElement('div');
+                div.className = "flex items-start group fade-in";
+                
+                const date = msg.createdAt ? new Date(msg.createdAt.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+                const letter = msg.userDisplay ? msg.userDisplay.charAt(msg.userDisplay.length - 1) : '?';
+                const colorClass = msg.uid === this.user.uid ? 'bg-blue-600' : 'bg-gray-600';
+
+                div.innerHTML = `
+                    <div class="w-8 h-8 rounded ${colorClass} flex items-center justify-center text-xs font-bold text-white flex-shrink-0 mt-1">
+                        ${letter}
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <div class="flex items-baseline">
+                            <span class="text-sm font-bold text-white mr-2">${msg.userDisplay || 'Anonyme'}</span>
+                            <span class="text-[10px] text-gray-500">${date}</span>
+                        </div>
+                        <p class="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">${this.escapeHtml(msg.text)}</p>
+                    </div>
+                `;
+                this.dom.messages.appendChild(div);
+            }
+
+            sendMessage() {
+                const text = this.dom.input.value.trim();
+                if (!text || !this.user) return;
+
+                addDoc(collection(this.db, 'artifacts', appId, 'public', 'data', 'messages'), {
+                    text: text,
+                    uid: this.user.uid,
+                    userDisplay: document.getElementById('user-name').textContent,
+                    channelId: this.currentChannelId,
+                    createdAt: serverTimestamp()
+                }).catch(err => this.showError("Erreur envoi: " + err.message));
+
+                this.dom.input.value = '';
+            }
+
+            // --- UI HELPERS ---
+
+            toggleCreateModal() {
+                const modal = document.getElementById('modal-create');
+                modal.classList.toggle('hidden');
+                if (!modal.classList.contains('hidden')) document.getElementById('new-channel-name').focus();
+            }
+
+            toggleVideoMode() {
+                const isChat = !this.dom.chatView.classList.contains('hidden');
+                if (isChat) {
+                    this.dom.chatView.classList.add('hidden');
+                    this.dom.videoView.classList.remove('hidden');
+                    document.getElementById('btn-video-mode').innerHTML = '<i class="fa-solid fa-comment mr-2"></i> Retour au Chat';
+                    document.getElementById('btn-video-mode').classList.replace('bg-[#2b2d31]', 'bg-blue-600');
+                    document.getElementById('btn-video-mode').classList.replace('text-gray-300', 'text-white');
+                } else {
+                    this.dom.videoView.classList.add('hidden');
+                    this.dom.chatView.classList.remove('hidden');
+                    document.getElementById('btn-video-mode').innerHTML = '<i class="fa-solid fa-video mr-2"></i> Salon Vocal / Partage';
+                    document.getElementById('btn-video-mode').classList.replace('bg-blue-600', 'bg-[#2b2d31]');
+                    document.getElementById('btn-video-mode').classList.replace('text-white', 'text-gray-300');
+                }
+            }
+
+            escapeHtml(text) {
+                if (!text) return '';
+                return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            }
+
+            // --- MEDIA ---
+
+            async startScreenShare() {
+                try {
+                    this.stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                    this.dom.localVideo.srcObject = this.stream;
+                    this.dom.localVideo.classList.remove('hidden');
+                    this.dom.videoPlaceholder.classList.add('hidden');
+                    
+                    // Écoute l'arrêt via l'interface du navigateur
+                    this.stream.getVideoTracks()[0].onended = () => this.stop
